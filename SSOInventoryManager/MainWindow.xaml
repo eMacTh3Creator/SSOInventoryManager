@@ -1,0 +1,278 @@
+<Window x:Class="SSOInventoryManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:views="clr-namespace:SSOInventoryManager.Views"
+        xmlns:converters="clr-namespace:SSOInventoryManager.Converters"
+        Title="SSO Inventory Manager"
+        Height="850" Width="1400" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        FontFamily="{DynamicResource MaterialDesignFont}">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:FlagToBackgroundConverter x:Key="FlagToBg"/>
+        <converters:BoolToEnabledTextConverter x:Key="BoolToEnabled"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVis"/>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Login overlay -->
+        <views:LoginView DataContext="{Binding LoginVm}"
+                         Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}"
+                         Panel.ZIndex="10"/>
+
+        <!-- Main content (visible when logged in) -->
+        <Grid Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVis}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>  <!-- Toolbar -->
+                <RowDefinition Height="Auto"/>  <!-- Warning banner -->
+                <RowDefinition Height="*"/>     <!-- Content -->
+                <RowDefinition Height="Auto"/>  <!-- Status bar -->
+            </Grid.RowDefinitions>
+
+            <!-- Toolbar -->
+            <Border Grid.Row="0" Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    BorderBrush="{DynamicResource MaterialDesign.Brush.Separator}" BorderThickness="0,0,0,1"
+                    Padding="8,6">
+                <DockPanel>
+                    <!-- Right side: search -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <md:PackIcon Kind="Magnify" VerticalAlignment="Center" Margin="0,0,6,0"
+                                     Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"/>
+                        <TextBox md:HintAssist.Hint="Search / Filter..."
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Width="280" Height="36" FontSize="13"
+                                 md:TextFieldAssist.HasClearButton="True"/>
+                    </StackPanel>
+
+                    <!-- Left side: action buttons -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Command="{Binding RefreshCommand}" ToolTip="Refresh data"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="36" Padding="12,0" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding ExportCsvCommand}" ToolTip="Export current tab to CSV"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="36" Padding="12,0" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="FileDelimited" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="CSV" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding ExportExcelCommand}" ToolTip="Export all to Excel"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="36" Padding="12,0" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="MicrosoftExcel" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="Excel" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,4"/>
+
+                        <Button Command="{Binding DisconnectCommand}" ToolTip="Disconnect and return to login"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="36" Padding="12,0"
+                                Foreground="{DynamicResource MaterialDesign.Brush.Secondary}">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Logout" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="Disconnect" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Warning Banner -->
+            <Border Grid.Row="1" Background="#FF6F00" Padding="12,8"
+                    Visibility="{Binding ShowWarning, Converter={StaticResource BoolToVis}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="DISMISS"
+                            Command="{Binding DismissWarningCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Foreground="White"/>
+                    <md:PackIcon Kind="AlertCircleOutline" VerticalAlignment="Center"
+                                 Foreground="White" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding WarningMessage}" Foreground="White"
+                               VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Device Code overlay -->
+            <Border Grid.Row="2" Panel.ZIndex="5" Background="#CC000000"
+                    Visibility="{Binding ShowDeviceCode, Converter={StaticResource BoolToVis}}">
+                <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                        CornerRadius="8" Padding="32"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        MaxWidth="500">
+                    <StackPanel>
+                        <md:PackIcon Kind="CellphoneLink" Width="48" Height="48"
+                                     HorizontalAlignment="Center" Margin="0,0,0,16"
+                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                        <TextBlock Text="Device Code Authentication"
+                                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                   HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <TextBox Text="{Binding DeviceCodeMessage, Mode=OneWay}"
+                                 IsReadOnly="True" TextWrapping="Wrap"
+                                 Background="Transparent" BorderThickness="0"
+                                 FontFamily="Consolas" FontSize="13"
+                                 Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"/>
+                        <ProgressBar IsIndeterminate="True" Margin="0,16,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Border>
+
+            <!-- Loading overlay -->
+            <Border Grid.Row="2" Panel.ZIndex="4" Background="#88000000"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                 IsIndeterminate="True" Width="48" Height="48"/>
+                    <TextBlock Text="Loading applications..."
+                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                               HorizontalAlignment="Center" Margin="0,16,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Main Content Area -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Tab Control -->
+                <TabControl Grid.Column="0"
+                            SelectedIndex="{Binding SelectedTabIndex}"
+                            Style="{StaticResource MaterialDesignNavigationRailTabControl}"
+                            md:NavigationRailAssist.ShowSelectionBackground="True">
+
+                    <!-- Azure Tab -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="MicrosoftAzure" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Azure / Entra Apps" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </TabItem.Header>
+                        <DataGrid ItemsSource="{Binding AzureAppsView}"
+                                  SelectedItem="{Binding SelectedItem}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="False"
+                                  CanUserSortColumns="True"
+                                  CanUserReorderColumns="True"
+                                  CanUserResizeColumns="True"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  FontSize="12.5"
+                                  RowBackground="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                                  AlternatingRowBackground="{DynamicResource MaterialDesign.Brush.Background}"
+                                  BorderThickness="0"
+                                  RowDetailsVisibilityMode="Collapsed">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                    <Setter Property="Background" Value="{Binding FlaggedForReview, Converter={StaticResource FlagToBg}}"/>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="Flag" Binding="{Binding FlaggedForReview, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
+                                <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="200" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="App ID" Binding="{Binding AppId}" Width="200" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="SSO Mode" Binding="{Binding SsoMode}" Width="100" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Audience" Binding="{Binding SignInAudience}" Width="130" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Publisher" Binding="{Binding PublisherDomain}" Width="150" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Enabled" Binding="{Binding Enabled, Converter={StaticResource BoolToEnabled}}" Width="70" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Assigned" Binding="{Binding AssignedUsersGroups}" Width="75" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Last Sign-In" Binding="{Binding LastSignIn}" Width="130" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="App Type" Binding="{Binding AppType}" Width="120" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Notes" Binding="{Binding Notes, UpdateSourceTrigger=LostFocus}" Width="200"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </TabItem>
+
+                    <!-- ADFS Tab -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Server" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="ADFS Apps" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </TabItem.Header>
+                        <DataGrid ItemsSource="{Binding AdfsAppsView}"
+                                  SelectedItem="{Binding SelectedItem}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="False"
+                                  CanUserSortColumns="True"
+                                  CanUserReorderColumns="True"
+                                  CanUserResizeColumns="True"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  FontSize="12.5"
+                                  RowBackground="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                                  AlternatingRowBackground="{DynamicResource MaterialDesign.Brush.Background}"
+                                  BorderThickness="0">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                    <Setter Property="Background" Value="{Binding FlaggedForReview, Converter={StaticResource FlagToBg}}"/>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="Flag" Binding="{Binding FlaggedForReview, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
+                                <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="220" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Identifier" Binding="{Binding Identifier}" Width="250" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="120" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Enabled" Binding="{Binding Enabled, Converter={StaticResource BoolToEnabled}}" Width="75" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Monitoring" Binding="{Binding MonitoringEnabled, Converter={StaticResource BoolToEnabled}}" Width="90" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Last Updated" Binding="{Binding LastUpdated}" Width="140" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Endpoints" Binding="{Binding EndpointUrls}" Width="250" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Rules" Binding="{Binding IssuanceRulesCount}" Width="60" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Notes" Binding="{Binding Notes, UpdateSourceTrigger=LostFocus}" Width="200"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </TabItem>
+                </TabControl>
+
+                <!-- Detail Pane (slide-in from right) -->
+                <Border Grid.Column="1"
+                        Width="380"
+                        Visibility="{Binding IsDetailOpen, Converter={StaticResource BoolToVis}}">
+                    <views:DetailPane/>
+                </Border>
+            </Grid>
+
+            <!-- Status Bar -->
+            <Border Grid.Row="3"
+                    Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    BorderBrush="{DynamicResource MaterialDesign.Brush.Separator}"
+                    BorderThickness="0,1,0,0"
+                    Padding="12,6">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding LastSyncTime}"
+                               Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                               FontSize="11.5" VerticalAlignment="Center"/>
+                    <md:PackIcon Kind="CircleSmall" VerticalAlignment="Center" Margin="0,0,4,0"
+                                 Foreground="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                    <TextBlock Text="{Binding StatusText}"
+                               Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                               FontSize="11.5" VerticalAlignment="Center"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
