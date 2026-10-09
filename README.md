@@ -1,8 +1,8 @@
 # SSO Inventory Manager
 
-A Windows desktop application for enterprise IT administrators to inventory and manage SSO applications across **Azure AD / Entra ID** and **ADFS** from a single pane of glass.
+List SSO applications from **Microsoft Entra ID** and **ADFS** in a Windows app. Review application details, add notes, flag items for review, and export the results.
 
-Built with WPF (.NET 8), Material Design, and the MVVM pattern.
+Uses WPF and .NET 8.
 
 ---
 
@@ -16,7 +16,7 @@ Built with WPF (.NET 8), Material Design, and the MVVM pattern.
 - **Notes** — Free-text notes per application (persisted in local SQLite)
 - **Export to CSV** — Exports the currently filtered tab
 - **Export to Excel** — Both tabs exported to a single `.xlsx` workbook with formatted headers and auto-column widths
-- **Dark themed UI** — Dense, professional Material Design interface
+- **Dark theme** — Material Design interface
 - **Encrypted config** — Connection settings stored locally using Windows DPAPI
 
 ---
